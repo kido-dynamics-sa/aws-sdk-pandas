@@ -8,7 +8,6 @@ from boto3.s3.transfer import TransferConfig
 
 from awswrangler import _utils, exceptions
 from awswrangler.s3._delete import delete_objects
-from awswrangler.s3._fs import get_botocore_valid_kwargs
 from awswrangler.s3._list import list_objects
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -23,10 +22,7 @@ def _copy_objects(
     _logger.debug("len(batch): %s", len(batch))
     client_s3: boto3.client = _utils.client(service_name="s3", session=boto3_session)
     resource_s3: boto3.resource = _utils.resource(service_name="s3", session=boto3_session)
-    if s3_additional_kwargs is None:
-        boto3_kwargs: Optional[Dict[str, Any]] = None
-    else:
-        boto3_kwargs = get_botocore_valid_kwargs(function_name="copy_object", s3_additional_kwargs=s3_additional_kwargs)
+    s3_additional_kwargs = {} if s3_additional_kwargs is None else s3_additional_kwargs
     for source, target in batch:
         source_bucket, source_key = _utils.parse_path(path=source)
         copy_source: Dict[str, str] = {"Bucket": source_bucket, "Key": source_key}
@@ -36,7 +32,7 @@ def _copy_objects(
             Bucket=target_bucket,
             Key=target_key,
             SourceClient=client_s3,
-            ExtraArgs=boto3_kwargs,
+            ExtraArgs=s3_additional_kwargs,
             Config=TransferConfig(num_download_attempts=10, use_threads=use_threads),
         )
 

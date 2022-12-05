@@ -9,7 +9,6 @@ from typing import Any, Dict, List, Optional, Tuple, Union
 import boto3
 
 from awswrangler import _utils
-from awswrangler.s3 import _fs
 from awswrangler.s3._list import _path2list
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -25,17 +24,12 @@ def _describe_object(
     bucket: str
     key: str
     bucket, key = _utils.parse_path(path=path)
-    if s3_additional_kwargs:
-        extra_kwargs: Dict[str, Any] = _fs.get_botocore_valid_kwargs(
-            function_name="head_object", s3_additional_kwargs=s3_additional_kwargs
-        )
-    else:
-        extra_kwargs = {}
+    s3_additional_kwargs = {} if s3_additional_kwargs is None else s3_additional_kwargs
     desc: Dict[str, Any]
     if version_id:
-        extra_kwargs["VersionId"] = version_id
+        s3_additional_kwargs["VersionId"] = version_id
     desc = _utils.try_it(
-        f=client_s3.head_object, ex=client_s3.exceptions.NoSuchKey, Bucket=bucket, Key=key, **extra_kwargs
+        f=client_s3.head_object, ex=client_s3.exceptions.NoSuchKey, Bucket=bucket, Key=key, **s3_additional_kwargs
     )
     return path, desc
 

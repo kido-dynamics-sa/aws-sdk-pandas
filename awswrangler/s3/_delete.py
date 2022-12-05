@@ -11,7 +11,6 @@ from awswrangler import _utils, exceptions
 from awswrangler._distributed import engine
 from awswrangler._threading import _get_executor
 from awswrangler.distributed.ray import ray_get
-from awswrangler.s3._fs import get_botocore_valid_kwargs
 from awswrangler.s3._list import _path2list
 
 _logger: logging.Logger = logging.getLogger(__name__)
@@ -39,15 +38,10 @@ def _delete_objects(
         session=boto3_session,
     )
     _logger.debug("len(paths): %s", len(paths))
-    if s3_additional_kwargs:
-        extra_kwargs: Dict[str, Any] = get_botocore_valid_kwargs(
-            function_name="list_objects_v2", s3_additional_kwargs=s3_additional_kwargs
-        )
-    else:
-        extra_kwargs = {}
+    s3_additional_kwargs = {} if s3_additional_kwargs is None else s3_additional_kwargs
     bucket = _utils.parse_path(path=paths[0])[0]
     batch: List[Dict[str, str]] = [{"Key": _utils.parse_path(path)[1]} for path in paths]
-    res = client_s3.delete_objects(Bucket=bucket, Delete={"Objects": batch}, **extra_kwargs)
+    res = client_s3.delete_objects(Bucket=bucket, Delete={"Objects": batch}, **s3_additional_kwargs)
     deleted: List[Dict[str, Any]] = res.get("Deleted", [])
     for obj in deleted:
         _logger.debug("s3://%s/%s has been deleted.", bucket, obj.get("Key"))
