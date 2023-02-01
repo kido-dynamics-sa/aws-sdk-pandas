@@ -3,6 +3,7 @@ import datetime
 import logging
 import re
 from heapq import heappop, heappush
+from time import sleep
 from typing import Any, Dict, List, Match, NamedTuple, Optional, Tuple, Union
 
 import boto3
@@ -39,7 +40,9 @@ class _LocalMetadataCacheManager:
         None
             None.
         """
-        while self._pqueue:
+        MAX_CACHE_ERRORS = 1000
+        error_counter = 0
+        while self._pqueue and error_counter < 1000:
             try:
                 oldest_item = self._cache[self._pqueue[0][1]]
                 items = list(
@@ -48,7 +51,13 @@ class _LocalMetadataCacheManager:
                     )
                 )
             except KeyError:
+                error_counter += 1
+                oldest_item = None
+                sleep(0.1)
                 continue
+
+        if error_counter == MAX_CACHE_ERRORS:
+            raise RuntimeError("Unable to find oldest item in cache.")
 
         cache_oversize = len(self._cache) + len(items) - self._max_cache_size
         for _ in range(cache_oversize):
