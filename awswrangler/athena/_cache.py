@@ -39,11 +39,16 @@ class _LocalMetadataCacheManager:
         None
             None.
         """
-        if self._pqueue:
-            oldest_item = self._cache[self._pqueue[0][1]]
-            items = list(
-                filter(lambda x: x["Status"]["SubmissionDateTime"] > oldest_item["Status"]["SubmissionDateTime"], items)
-            )
+        while self._pqueue:
+            try:
+                oldest_item = self._cache[self._pqueue[0][1]]
+                items = list(
+                    filter(
+                        lambda x: x["Status"]["SubmissionDateTime"] > oldest_item["Status"]["SubmissionDateTime"], items
+                    )
+                )
+            except KeyError:
+                continue
 
         cache_oversize = len(self._cache) + len(items) - self._max_cache_size
         for _ in range(cache_oversize):
