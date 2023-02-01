@@ -55,6 +55,8 @@ class _LocalMetadataCacheManager:
                 oldest_item = None
                 sleep(0.1)
                 continue
+            else:
+                break
 
         if error_counter == MAX_CACHE_ERRORS:
             raise RuntimeError("Unable to find oldest item in cache.")
