@@ -59,7 +59,7 @@ class _LocalMetadataCacheManager:
                 break
 
         if error_counter == MAX_CACHE_ERRORS:
-            raise RuntimeError("Unable to find oldest item in cache.")
+            logging.error("Unable to find oldest item in cache.")
 
         cache_oversize = len(self._cache) + len(items) - self._max_cache_size
         for _ in range(cache_oversize):
